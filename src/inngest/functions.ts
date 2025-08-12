@@ -150,7 +150,8 @@ export const codeAgentFunction = inngest.createFunction(
 
     const result = await network.run(event.data.value);
 
-    const isError = !result.state.data.summary || Object.keys(result.state.data.files || {}).length === 0;
+    // const isError = !result.state.data.summary || Object.keys(result.state.data.files || {}).length === 0;
+    const isError = Object.keys(result.state.data.files || {}).length === 0;
 
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
