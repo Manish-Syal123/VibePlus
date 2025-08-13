@@ -36,7 +36,7 @@ const ProjectView = ({ projectId }: Props) => {
             />
           </Suspense>
         </ResizablePanel>
-        <ResizableHandle withHandle />
+        <ResizableHandle className="hover:bg-primary transition-colors hover:w-1" />
 
         {/* Right Side */}
         <ResizablePanel defaultSize={65} minSize={50}>
@@ -46,7 +46,7 @@ const ProjectView = ({ projectId }: Props) => {
             value={tabState}
             onValueChange={(value) => setTabState(value as "preview" | "code")}
           >
-            <div className="w-full flex items-center p-2 border-b gap-x-2">
+            <div className="w-full flex items-center p-2.5 border-b gap-x-2">
               <TabsList className="h-8 p-0 border rounded-md">
                 <TabsTrigger value="preview" className="rounded-md">
                   <EyeIcon /> <span>Demo</span>
