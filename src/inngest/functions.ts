@@ -1,16 +1,27 @@
 import { z } from "zod";
 import { Sandbox } from "@e2b/code-interpreter";
-import { openai, createAgent, createTool, createNetwork, gemini, type Tool } from "@inngest/agent-kit";
+import {
+  openai,
+  createAgent,
+  createTool,
+  createNetwork,
+  gemini,
+  type Tool,
+  type Message,
+  createState,
+} from "@inngest/agent-kit";
 
-import { PROMPT } from "@/prompt";
+import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { inngest } from "./client";
-import { getSandbox, lastAssistantTextMessageContent } from "./utils";
+import { getSandbox, lastAssistantTextMessageContent, parseAgentOutput } from "./utils";
 import { prisma } from "@/lib/prisma";
 
 interface AgentState {
   summary: string;
   files: { [path: string]: string }; // file path to content mapping "/app/page.tsx": "file content"
 }
+
+
 
 export const codeAgentFunction = inngest.createFunction(
   { id: "code-agent" },
@@ -20,6 +31,42 @@ export const codeAgentFunction = inngest.createFunction(
       const sandbox = await Sandbox.create("vibeplus-nextjs-test2");
       return sandbox.sandboxId;
     });
+
+    const previousMessages = await step.run(
+      "get-previous-messages",
+      async () => {
+        const formattedMessages: Message[] = [];
+
+        const messages = await prisma.message.findMany({
+          where: {
+            projectId: event.data.projectId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
+
+        for (const message of messages) {
+          formattedMessages.push({
+            type: "text",
+            role: message.role === "ASSISTANT" ? "assistant" : "user",
+            content: message.content,
+          });
+        }
+
+        return formattedMessages;
+      }
+    );
+
+    const state = createState<AgentState>(
+      {
+        summary: "",
+        files: {},
+      },
+      {
+        messages: previousMessages,
+      }
+    );
 
     const codeAgent = createAgent<AgentState>({
       name: "code-agent",
@@ -58,7 +105,9 @@ export const codeAgentFunction = inngest.createFunction(
 
                 return result.stdout;
               } catch (e) {
-                console.log(`Command failed: ${e} \nstdout: ${buffers.stdout} \nstderr: ${buffers.stderr}`);
+                console.log(
+                  `Command failed: ${e} \nstdout: ${buffers.stdout} \nstderr: ${buffers.stderr}`
+                );
                 return `Command failed: ${e} \nstdout: ${buffers.stdout} \nstderr: ${buffers.stderr}`;
               }
             });
@@ -75,21 +124,27 @@ export const codeAgentFunction = inngest.createFunction(
               })
             ),
           }),
-          handler: async ({ files }, { step, network }: Tool.Options<AgentState>) => {
-            const newFiles = await step?.run("createOrUpdateFiles", async () => {
-              try {
-                const updateFiles = network.state.data.files || {};
-                const sandbox = await getSandbox(sandboxId);
-                for (const file of files) {
-                  await sandbox.files.write(file.path, file.content);
-                  updateFiles[file.path] = file.content;
-                }
+          handler: async (
+            { files },
+            { step, network }: Tool.Options<AgentState>
+          ) => {
+            const newFiles = await step?.run(
+              "createOrUpdateFiles",
+              async () => {
+                try {
+                  const updateFiles = network.state.data.files || {};
+                  const sandbox = await getSandbox(sandboxId);
+                  for (const file of files) {
+                    await sandbox.files.write(file.path, file.content);
+                    updateFiles[file.path] = file.content;
+                  }
 
-                return updateFiles;
-              } catch (error) {
-                return "Error: " + error;
+                  return updateFiles;
+                } catch (error) {
+                  return "Error: " + error;
+                }
               }
-            });
+            );
 
             if (typeof newFiles === "object") {
               network.state.data.files = newFiles;
@@ -122,7 +177,8 @@ export const codeAgentFunction = inngest.createFunction(
       ],
       lifecycle: {
         onResponse: async ({ result, network }) => {
-          const lastAssistantMessageText = lastAssistantTextMessageContent(result);
+          const lastAssistantMessageText =
+            lastAssistantTextMessageContent(result);
 
           if (lastAssistantMessageText && network) {
             if (lastAssistantMessageText.includes("<task_summary>")) {
@@ -139,6 +195,7 @@ export const codeAgentFunction = inngest.createFunction(
       name: "coding-agent-network",
       agents: [codeAgent],
       maxIter: 15,
+      defaultState: state,
       router: async ({ network }) => {
         const summary = network.state.data.summary;
         if (summary) {
@@ -148,7 +205,30 @@ export const codeAgentFunction = inngest.createFunction(
       },
     });
 
-    const result = await network.run(event.data.value);
+    const result = await network.run(event.data.value, {state});
+
+    const fragmentTitleGenerator = createAgent({
+      name: "fragment-title-generator",
+      description: "A fragment title generator",
+      system: FRAGMENT_TITLE_PROMPT,
+      model: gemini({
+        model: "gemini-2.0-flash",
+      }),
+    })
+
+    const responsegenerator = createAgent({
+      name: "response-generator",
+      description: "A response generator",
+      system: RESPONSE_PROMPT,
+      model: gemini({
+        model: "gemini-2.0-flash",
+      }),
+    })
+
+    const {output: fragmentTitleOutput} = await fragmentTitleGenerator.run(result.state.data.summary);
+    const {output: responseOutput} = await responsegenerator.run(result.state.data.summary);
+
+
 
     // const isError = !result.state.data.summary || Object.keys(result.state.data.files || {}).length === 0;
     const isError = Object.keys(result.state.data.files || {}).length === 0;
@@ -174,13 +254,13 @@ export const codeAgentFunction = inngest.createFunction(
       return await prisma.message.create({
         data: {
           projectId: event.data.projectId,
-          content: result.state.data.summary,
+          content: parseAgentOutput(responseOutput,"Here you go"),
           role: "ASSISTANT",
           type: "RESULT",
           fragment: {
             create: {
               sandboxeUrl: sandboxUrl,
-              title: "Fragment",
+              title: parseAgentOutput(fragmentTitleOutput, "Fragment"),
               files: result.state.data.files,
             },
           },
