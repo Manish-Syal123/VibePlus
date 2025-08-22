@@ -15,6 +15,8 @@ import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { inngest } from "./client";
 import { getSandbox, lastAssistantTextMessageContent, parseAgentOutput } from "./utils";
 import { prisma } from "@/lib/prisma";
+import { SANDBOX_TIMEOUT } from "./types";
+import { auth } from "@clerk/nextjs/server";
 
 interface AgentState {
   summary: string;
@@ -27,8 +29,15 @@ export const codeAgentFunction = inngest.createFunction(
   { id: "code-agent" },
   { event: "code-agent/run" as const },
   async ({ event, step }) => {
+    // const {has} = await auth();
+    // const hasProAccess = has({plan: "pro"})
+
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("vibeplus-nextjs-test2");
+      // if(hasProAccess){
+      //   await sandbox.setTimeout(SANDBOX_TIMEOUT);
+      // }
+      await sandbox.setTimeout(SANDBOX_TIMEOUT);
       return sandbox.sandboxId;
     });
 
@@ -44,6 +53,7 @@ export const codeAgentFunction = inngest.createFunction(
           orderBy: {
             createdAt: "desc",
           },
+          take: 5,
         });
 
         for (const message of messages) {
@@ -54,7 +64,7 @@ export const codeAgentFunction = inngest.createFunction(
           });
         }
 
-        return formattedMessages;
+        return formattedMessages.reverse();
       }
     );
 

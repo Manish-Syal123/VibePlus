@@ -1,7 +1,11 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessagesContainer } from "../components/messages-container";
 import { Fragment } from "@/generated/prisma";
@@ -13,6 +17,7 @@ import Link from "next/link";
 import { FileExplorer } from "@/components/file-explorer";
 import { UserControl } from "@/components/user-control";
 import { useAuth } from "@clerk/nextjs";
+import { ErrorBoundary } from "react-error-boundary";
 
 interface Props {
   projectId: string;
@@ -28,17 +33,27 @@ const ProjectView = ({ projectId }: Props) => {
     <div className="h-screen">
       <ResizablePanelGroup direction="horizontal">
         {/* Left side */}
-        <ResizablePanel defaultSize={35} minSize={20} className="flex flex-col min-h-0">
-          <Suspense fallback={<p>Loading project...</p>}>
-            <ProjectHeader projectId={projectId} />
-          </Suspense>
-          <Suspense fallback={<p>Loading Messages...</p>}>
-            <MessagesContainer
-              projectId={projectId}
-              activeFragment={activeFragment}
-              setActiveFragment={setActiveFragment}
-            />
-          </Suspense>
+        <ResizablePanel
+          defaultSize={35}
+          minSize={20}
+          className="flex flex-col min-h-0"
+        >
+          <ErrorBoundary fallback={<p className="p-4">Project Header Error</p>}>
+            <Suspense fallback={<p>Loading project...</p>}>
+              <ProjectHeader projectId={projectId} />
+            </Suspense>
+          </ErrorBoundary>
+          <ErrorBoundary
+            fallback={<p className="p-4">Messages container Error</p>}
+          >
+            <Suspense fallback={<p>Loading Messages...</p>}>
+              <MessagesContainer
+                projectId={projectId}
+                activeFragment={activeFragment}
+                setActiveFragment={setActiveFragment}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </ResizablePanel>
         <ResizableHandle className="hover:bg-primary transition-colors hover:w-1" />
 
@@ -61,7 +76,12 @@ const ProjectView = ({ projectId }: Props) => {
               </TabsList>
               <div className="ml-auto flex items-center gap-x-2">
                 {!hasProAccess && ( // if Not a pro user means its a free tire user, only then show them Upgrade button
-                  <Button asChild size="sm" variant="tertiary" className="rounded-[8px]">
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="tertiary"
+                    className="rounded-[8px]"
+                  >
                     <Link href="/pricing">
                       <CrownIcon /> Upgrade
                     </Link>
@@ -70,10 +90,16 @@ const ProjectView = ({ projectId }: Props) => {
                 <UserControl />
               </div>
             </div>
-            <TabsContent value="preview">{!!activeFragment && <FragmentWeb data={activeFragment} />}</TabsContent>
+            <TabsContent value="preview">
+              {!!activeFragment && <FragmentWeb data={activeFragment} />}
+            </TabsContent>
             <TabsContent value="code" className="min-h-0">
               {/* <CodeView lang="ts" code="const a ='Hello world!!';" /> */}
-              {!!activeFragment?.files && <FileExplorer files={activeFragment.files as { [path: string]: string }} />}
+              {!!activeFragment?.files && (
+                <FileExplorer
+                  files={activeFragment.files as { [path: string]: string }}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </ResizablePanel>
