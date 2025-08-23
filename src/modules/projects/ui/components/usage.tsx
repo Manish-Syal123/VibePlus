@@ -16,7 +16,6 @@ const Usage = ({ points, msBeforeNext }: Props) => {
 
   const resetTime = useMemo(() => {
     try {
-      throw new Error("opps");
       return formatDuration(
         intervalToDuration({
           start: new Date(),
