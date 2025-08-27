@@ -79,7 +79,7 @@ export const ProjectForm = () => {
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className={cn(
-            "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all",
+            "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all shadow-[0px_0px_660px_60px_#7f9cf5]",
             isFocused && "shadow-xs"
           )}
         >
@@ -114,9 +114,16 @@ export const ProjectForm = () => {
             </div>
             <Button
               disabled={isButtonDisabled}
-              className={cn("size-8 rounded-full", isButtonDisabled && "bg-muted-foreground border")}
+              className={cn(
+                "size-8 rounded-full",
+                isButtonDisabled && "bg-muted-foreground border"
+              )}
             >
-              {isPending ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowUpIcon />}
+              {isPending ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : (
+                <ArrowUpIcon />
+              )}
             </Button>
           </div>
         </form>

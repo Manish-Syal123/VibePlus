@@ -1,5 +1,9 @@
 import { TreeItem } from "@/types";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -30,7 +34,13 @@ export const TreeView = ({ data, value, onSelect }: TreeViewProps) => {
             <SidebarGroupContent>
               <SidebarMenu>
                 {data.map((item, index) => (
-                  <Tree key={index} item={item} selectedValue={value} onSelect={onSelect} parentPath="" />
+                  <Tree
+                    key={index}
+                    item={item}
+                    selectedValue={value}
+                    onSelect={onSelect}
+                    parentPath=""
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -58,7 +68,7 @@ const Tree = ({ item, selectedValue, onSelect, parentPath }: TreeProps) => {
     return (
       <SidebarMenuButton
         isActive={isSelected}
-        className="flex items-center gap-2 w-full data-[active=true]:bg-accent hover:bg-accent/50"
+        className="flex items-center gap-2 w-full data-[active=true]:bg-accent hover:bg-accent/50 rounded-[10px]"
         onClick={() => onSelect?.(currentPath)}
       >
         <FileIcon className="h-4 w-4 shrink-0" />
@@ -70,9 +80,12 @@ const Tree = ({ item, selectedValue, onSelect, parentPath }: TreeProps) => {
   // It's a folder
   return (
     <SidebarMenuItem>
-      <Collapsible className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90" defaultOpen>
+      <Collapsible
+        className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+        defaultOpen
+      >
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="flex items-center gap-2 w-full">
+          <SidebarMenuButton className="flex items-center gap-2 w-full rounded-[10px]">
             <ChevronRightIcon className="h-4 w-4 shrink-0 transition-transform" />
             <FolderIcon className="h-4 w-4 shrink-0" />
             <span className="truncate">{name}</span>

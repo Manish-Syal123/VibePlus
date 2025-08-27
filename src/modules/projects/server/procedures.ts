@@ -22,7 +22,10 @@ export const projectsRouter = createTRPCRouter({
         await consumeCredits();
       } catch (error) {
         if (error instanceof Error) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Something went wrong" });
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Something went wrong",
+          });
         } else {
           throw new TRPCError({
             code: "TOO_MANY_REQUESTS",
@@ -86,9 +89,43 @@ export const projectsRouter = createTRPCRouter({
       });
 
       if (!existingProject) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Project not found",
+        });
       }
 
       return existingProject;
+    }),
+
+  // Delete project by Id - deleting a Project  will also delete its associated Message records and their related Fragment records, because of cascade(delete) in schema.prisma
+  deleteProject: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.string().min(1, { message: "Project ID is required" }),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const existingProject = await prisma.project.findUnique({
+        where: {
+          id: input.projectId,
+          userId: ctx.auth.userId,
+        },
+      });
+
+      if (!existingProject) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Project not found",
+        });
+      }
+
+      await prisma.project.delete({
+        where: {
+          id: input.projectId,
+        },
+      });
+
+      return { success: true };
     }),
 });
