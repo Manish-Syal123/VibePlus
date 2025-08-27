@@ -3,6 +3,7 @@ import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import React, { Suspense } from "react";
+import { Loader } from "lucide-react";
 
 interface Props {
   params: {
@@ -12,15 +13,25 @@ interface Props {
 const Page = async ({ params }: Props) => {
   const { projectId } = await params;
   const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(trpc.messages.getMany.queryOptions({ projectId }));
-  void queryClient.prefetchQuery(trpc.projects.getOne.queryOptions({ id: projectId }));
+  void queryClient.prefetchQuery(
+    trpc.messages.getMany.queryOptions({ projectId })
+  );
+  void queryClient.prefetchQuery(
+    trpc.projects.getOne.queryOptions({ id: projectId })
+  );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <ErrorBoundary fallback={<p>Error!</p>}>
-      <Suspense fallback={<p>Loading Project...</p>}>
-        <ProjectView projectId={projectId} />
-      </Suspense>
+        <Suspense
+          fallback={
+            <p>
+              Loading Project... <Loader className="animate-spin" />
+            </p>
+          }
+        >
+          <ProjectView projectId={projectId} />
+        </Suspense>
       </ErrorBoundary>
     </HydrationBoundary>
   );
