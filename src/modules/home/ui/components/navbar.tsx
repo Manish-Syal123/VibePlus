@@ -2,23 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 
 import React from "react";
-import { UserControl } from "@/components/user-control";
 import { useScroll } from "@/hooks/use-scroll";
 import { cn } from "@/lib/utils";
 import { SunMoon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { dark } from "@clerk/themes";
-import { unknown } from "zod";
 import { useCurrentTheme } from "@/hooks/use-current-theme";
 
 export const Navbar = () => {
@@ -30,8 +22,7 @@ export const Navbar = () => {
     <nav
       className={cn(
         "p-4 bg-transparent fixed top-0 left-0 right-0 z-50 transition-all duration-200 border-b border-transparent",
-        isScrollde &&
-          "backdrop-blur-sm border dark:border-white border-input rounded-full p-2.5 mt-1.5 mx-24 lg:mx-96"
+        isScrollde && "backdrop-blur-sm border dark:border-white border-input rounded-full p-2.5 mt-1.5 mx-24 lg:mx-96"
       )}
     >
       <div className="max-w-5xl mx-auto w-full flex justify-between items-center">
@@ -71,9 +62,7 @@ export const Navbar = () => {
               <UserButton.Action
                 label={`Theme (${theme})`}
                 labelIcon={<SunMoon size={20} />}
-                onClick={() =>
-                  setTheme((prev) => (prev === "light" ? "dark" : "light"))
-                }
+                onClick={() => setTheme((prev) => (prev === "light" ? "dark" : "light"))}
               />
             </UserButton.MenuItems>
           </UserButton>

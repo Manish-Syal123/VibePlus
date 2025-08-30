@@ -38,7 +38,7 @@ export const MessageForm = ({ projectId }: Props) => {
 
   const createMessage = useMutation(
     trpc.messages.create.mutationOptions({
-      onSuccess: (data) => {
+      onSuccess: () => {
         form.reset();
         //what is invalidateQueries : Query cache (via ) that certain cached data is no longer fresh or reliable, and should be refetched from the server the next time it's needed.
         queryClient.invalidateQueries(trpc.messages.getMany.queryOptions({ projectId }));

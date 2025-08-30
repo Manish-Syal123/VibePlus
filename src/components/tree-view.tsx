@@ -1,9 +1,5 @@
 import { TreeItem } from "@/types";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +9,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
 } from "@/components/ui/sidebar";
@@ -34,13 +29,7 @@ export const TreeView = ({ data, value, onSelect }: TreeViewProps) => {
             <SidebarGroupContent>
               <SidebarMenu>
                 {data.map((item, index) => (
-                  <Tree
-                    key={index}
-                    item={item}
-                    selectedValue={value}
-                    onSelect={onSelect}
-                    parentPath=""
-                  />
+                  <Tree key={index} item={item} selectedValue={value} onSelect={onSelect} parentPath="" />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -80,10 +69,7 @@ const Tree = ({ item, selectedValue, onSelect, parentPath }: TreeProps) => {
   // It's a folder
   return (
     <SidebarMenuItem>
-      <Collapsible
-        className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
-        defaultOpen
-      >
+      <Collapsible className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90" defaultOpen>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="flex items-center gap-2 w-full rounded-[10px]">
             <ChevronRightIcon className="h-4 w-4 shrink-0 transition-transform" />
